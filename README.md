@@ -1,0 +1,2 @@
+# JSDeco
+JavaScript Decorator example
