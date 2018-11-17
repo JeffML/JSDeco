@@ -20,9 +20,44 @@ const log = (target, name, descriptor) => {
   const original = descriptor.value;  // hold onto the original function
 
   if (typeof original === 'function') {  //ensure that it is a function
-    descriptor.value = function (...args) {
-      const result = original.apply(this, args);
+    // substitute a new function for the original, this is what will be called instead
+    descriptor.value = function (...args) {     
+      const result = original.apply(this, args);  // call the now-wrapped original
       console.log(`${name}(${args}) = ${result}`)
+    }
+  }
+}
+
+const log2 = (target, name, descriptor) => {
+  const original = descriptor.value;  
+
+  if (typeof original === 'function') { 
+    const paramNames = getParamNames(original)
+    
+    descriptor.value = function (...args) {
+      const params = paramNames.reduce((obj, pn, i) => {
+        obj[pn] = args[i];
+        return obj;}, {} )
+
+      const result = original.apply(this, args);
+      console.log(`${name}(${JSON.stringify(params)}) = ${result}`)
+    }
+  }
+}
+
+const insertStuff = (target, name, descriptor) => {
+  const original = descriptor.value;  
+
+  if (typeof original === 'function') { 
+    const paramNames = getParamNames(original)
+    console.log({target})
+    descriptor.value = function (stuff) {
+      const args = paramNames.slice(1).reduce((arr, pn, i) => {
+        arr[i] = stuff[pn];
+        return arr;}, [] )
+
+      const result = original.apply(this, [stuff, ...args]);
+      // console.log(`${name}(${JSON.stringify(args)}) = ${result}`)
     }
   }
 }
@@ -32,7 +67,25 @@ class MyClass {
   sum(a, b) {
     return a + b;
   }
+
+  @log2
+  sum2(a, b) {
+    return a + b;
+  }
+
+  @insertStuff
+  getStuff(stuff, isWombat, sugar) {
+    console.log({isWombat, sugar})
+  }
 }
 
 const instance = new MyClass();
-instance.sum(2, 3);
+// instance.sum2(2, 3);
+
+const stuff = {
+  isWombat: true,
+  sugar: ["in the morning", "in the evening", "at suppertime"] 
+}
+
+instance.getStuff(stuff);
+
