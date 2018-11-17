@@ -50,13 +50,12 @@ const insertStuff = (target, name, descriptor) => {
 
   if (typeof original === 'function') { 
     const paramNames = getParamNames(original)
-    console.log({target})
-    descriptor.value = function (stuff) {
-      const args = paramNames.slice(1).reduce((arr, pn, i) => {
-        arr[i] = stuff[pn];
+    descriptor.value = function () {
+      const args = paramNames.reduce((arr, pn, i) => {
+        arr[i] = this.newStuff[pn];
         return arr;}, [] )
 
-      const result = original.apply(this, [stuff, ...args]);
+      const result = original.apply(this, [...args]);
       // console.log(`${name}(${JSON.stringify(args)}) = ${result}`)
     }
   }
@@ -74,18 +73,24 @@ class MyClass {
   }
 
   @insertStuff
-  getStuff(stuff, isWombat, sugar) {
+  getStuff(isWombat, sugar) {
     console.log({isWombat, sugar})
   }
 }
 
 const instance = new MyClass();
-// instance.sum2(2, 3);
+instance.sum2(4, 5);
 
 const stuff = {
   isWombat: true,
   sugar: ["in the morning", "in the evening", "at suppertime"] 
 }
 
-instance.getStuff(stuff);
+instance.newStuff = stuff;
+
+instance.getStuff();
+
+instance.newStuff.sugar = ["You are my candy, girl", "and you keep me wanting you"];
+
+instance.getStuff();
 
